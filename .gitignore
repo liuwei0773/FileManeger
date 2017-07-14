@@ -1,3 +1,5 @@
 *.pdb
 *.cache
 /FileManager/obj/*
+*.suo
+*.exe

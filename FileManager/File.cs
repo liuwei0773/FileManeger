@@ -201,6 +201,7 @@ namespace FileManager
             fs.Flush();
             fs.Close();
             return true;
+
         }
 
         static public bool ReadFileInfomation(ArrayList fileInfomationArr, string fileName = "")
