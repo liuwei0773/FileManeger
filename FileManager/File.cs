@@ -34,7 +34,7 @@ namespace FileManager
                 connection.Open();
                 using (SQLiteCommand command = new SQLiteCommand(connection))
                 {
-                    command.CommandText = "select count(*) from sqlite_master where type = 'table' and name = 'movie_name'";
+                    command.CommandText = "select count(*) from sqlite_master where type = 'table' and name = 'file_name'";
                     int num = Convert.ToInt32(command.ExecuteScalar());
                     if (num > 0)
                         tableExist = true;
@@ -46,21 +46,34 @@ namespace FileManager
             if (tableExist)
             {
                 db = new SQLiteDBHelper(dbPath);
-                sql = "DROP TABLE movie_name";
+                sql = "DROP TABLE file_name";
                 db.ExecuteNonQuery(sql, null);
             }
 
             db = new SQLiteDBHelper(dbPath);
-            sql = "CREATE TABLE movie_name(Name TEXT NOT NULL , Actor1  REFERENCES actor_name(Name), Actor2 REFERENCES actor_name(Name),Actor3 REFERENCES actor_name(Name), Actor4  REFERENCES actor_name(Name), Actor5  REFERENCES actor_name(Name), FilePath TEXT PRIMARY KEY)";
+            
+            sql = @"CREATE TABLE file_name(
+                    name  TEXT,
+                    property1  TEXT,
+                    property2  TEXT,
+                    property3  TEXT,
+                    property4  TEXT,
+                    property5  TEXT,
+                    property6  TEXT,
+                    property7  TEXT,
+                    property8  TEXT,
+                    property9  TEXT,
+                    property10 TEXT,
+                    filePath   TEXT )";
             db.ExecuteNonQuery(sql, null);
 
-            sql = "INSERT INTO movie_name(Name,FilePath)values(@Name,@FilePath)";
+            sql = "INSERT INTO file_name(name,filePath)values(@name, @filePath)";
             db = new SQLiteDBHelper(dbPath);
             for (int i = 0; i < g_FileInfoCollector.Count; i++)
             {
                 SQLiteParameter[] parameters = new SQLiteParameter[]{
-                    new SQLiteParameter("@Name",((FileInformation)g_FileInfoCollector[i]).FileName),
-                    new SQLiteParameter("@FilePath",((FileInformation)g_FileInfoCollector[i]).FullName)};
+                    new SQLiteParameter("@name",((FileInformation)g_FileInfoCollector[i]).FileName),
+                    new SQLiteParameter("@filePath",((FileInformation)g_FileInfoCollector[i]).FullName)};
                 db.ExecuteNonQuery(sql, parameters);
             }
 
@@ -201,6 +214,7 @@ namespace FileManager
             fs.Flush();
             fs.Close();
             return true;
+
         }
 
         static public bool ReadFileInfomation(ArrayList fileInfomationArr, string fileName = "")
