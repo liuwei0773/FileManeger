@@ -160,6 +160,28 @@ namespace FileManager
             }
         }
 
+        /// <summary>
+        /// 检测数据库中某表是否存在
+        /// </summary>
+        public bool IsTableExist(string tableName)
+        {
+            string sql = "select count(*) from sqlite_master where type = 'table' and name = " + tableName;
+            int num = Convert.ToInt32(ExecuteScalar(sql, null));
+            if (num > 0)
+                return true;
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// 删除数据库中某表
+        /// </summary>
+        public void DeleteTable(string tableName)
+        {
+            string sql = "DROP TABLE file_name";
+            ExecuteNonQuery(sql, null);
+        }
+
 
         public static void CreateTable()
         {
