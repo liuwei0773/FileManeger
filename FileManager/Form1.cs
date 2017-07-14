@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Collections;
 using System.IO;
+using System.Data.SQLite;
+using System.Data;
 
 namespace FileManager
 {
@@ -14,24 +16,18 @@ namespace FileManager
             this.Opacity = 0.95;
             this.Width = UI.g_windowWidth;
             this.Height = UI.g_windowHeight;
-            Init();
-            //SQLiteDBHelper.CreateTable();
-           // SQLiteDBHelper.InsertData();
-           // SQLiteDBHelper.ShowData();
+            Init();         
         }
 
         public void Init()
         {
             
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 13; i++)
             {
                 DataGridViewColumn col = new DataGridViewTextBoxColumn();
                 dataGridView1.Columns.Add(col);
-            }
-            dataGridView1.Columns[0].HeaderText = "-";
-            dataGridView1.Columns[1].HeaderText = "-";
-            dataGridView1.Columns[2].HeaderText = "-";
-            dataGridView1.Columns[3].HeaderText = "-";          
+                dataGridView1.Columns[i].HeaderText = "-";
+            }     
             dataGridView1.Rows.Insert(0, 5);
             SetDataGridView1Width();
             Load_Click(null, null);
@@ -42,10 +38,10 @@ namespace FileManager
         /// </summary>
         public void SetDataGridView1Width()
         {
-            dataGridView1.Columns[0].Width = 80;
-            dataGridView1.Columns[1].Width = 180;
-            dataGridView1.Columns[2].Width = 180;
-            dataGridView1.Columns[3].Width = 680;
+            dataGridView1.Columns[0].Width = 60;
+            dataGridView1.Columns[1].Width = 120;
+            dataGridView1.Columns[2].Width = 120;
+            dataGridView1.Columns[3].Width = 120;
         }
 
         /// <summary>
@@ -65,11 +61,19 @@ namespace FileManager
 
             File.SentToDB();
 
+            SetColName();
+            SetDataGridView1Width();
+        }
+
+        private void SetColName()
+        {
             dataGridView1.Columns[0].HeaderText = "序号";
             dataGridView1.Columns[1].HeaderText = "文件名";
-            dataGridView1.Columns[2].HeaderText = "标签";
-            dataGridView1.Columns[3].HeaderText = "路径";
-            SetDataGridView1Width();
+            for (int i = 2; i < 12; i++)
+            {
+                dataGridView1.Columns[i].HeaderText = "属性" + (i - 1).ToString();
+            }
+            dataGridView1.Columns[12].HeaderText = "路径";
         }
 
   
@@ -167,19 +171,50 @@ namespace FileManager
 
          public void UpdataGridView(ArrayList FileInfoCollector)
         {
-            dataGridView1.Columns[0].HeaderText = "序号";
-            dataGridView1.Columns[1].HeaderText = "文件名";
-            dataGridView1.Columns[2].HeaderText = "标签";
-            dataGridView1.Columns[3].HeaderText = "路径";
+            SetColName();
             dataGridView1.Rows.Clear();
-              for (int i = 0; i < FileInfoCollector.Count; i++)
+
+            int serialIndex = File.GetDataGridViewIndex(dataGridView1, "序号");
+            int fileNameIndex = File.GetDataGridViewIndex(dataGridView1, "文件名");
+            int pathIndex = File.GetDataGridViewIndex(dataGridView1, "路径");
+
+            if(true)
             {
-                dataGridView1.Rows.Add();
-                dataGridView1.Rows[i].Cells[0].Value = i.ToString();
-                dataGridView1.Rows[i].Cells[1].Value = ((File.FileInformation)FileInfoCollector[i]).FileName;
-                dataGridView1.Rows[i].Cells[2].Value = ((File.FileInformation)FileInfoCollector[i]).Lable.Replace("Lable:", "");
-                dataGridView1.Rows[i].Cells[3].Value = ((File.FileInformation)FileInfoCollector[i]).FullName;
+                const string dbPath = ".\\db.db3";
+                if (!System.IO.File.Exists(dbPath))
+                    return;
+         
+                SQLiteDBHelper db = new SQLiteDBHelper(dbPath);
+                string sql = "select * from file_name";
+                using (SQLiteDataReader reader = db.ExecuteReader(sql, null))
+                {
+                    int index = 0;
+                    while (reader.Read())
+                    {
+                        dataGridView1.Rows.Add();
+                        dataGridView1.Rows[index].Cells[serialIndex].Value = index.ToString();
+                        dataGridView1.Rows[index].Cells[fileNameIndex].Value = reader["name"].ToString();                    
+                        dataGridView1.Rows[index].Cells[pathIndex].Value = reader["filePath"].ToString();
+                        ++index;
+                    }
+                }
+
+
             }
+            else
+            {
+                for (int i = 0; i < FileInfoCollector.Count; i++)
+                {
+                    dataGridView1.Rows.Add();
+                    dataGridView1.Rows[i].Cells[serialIndex].Value = i.ToString();
+                    dataGridView1.Rows[i].Cells[fileNameIndex].Value = ((File.FileInformation)FileInfoCollector[i]).FileName;
+                    dataGridView1.Rows[i].Cells[2].Value = ((File.FileInformation)FileInfoCollector[i]).Lable.Replace("Lable:", "");
+                    dataGridView1.Rows[i].Cells[pathIndex].Value = ((File.FileInformation)FileInfoCollector[i]).FullName;
+                }
+            }
+
+
+           
              
         }   
         
