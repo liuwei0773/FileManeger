@@ -10,13 +10,17 @@ namespace FileManager
 {
     public partial class Form1 : Form
     {
+        private FileProperty fileProperty = null;
         public Form1()
         {
             InitializeComponent();
             this.Opacity = 0.95;
             this.Width = UI.g_windowWidth;
             this.Height = UI.g_windowHeight;
-            Init();         
+
+            fileProperty = new FileProperty(dataGridView1);
+            fileProperty.Init();
+            //Init();         
         }
 
         public void Init()
@@ -28,7 +32,7 @@ namespace FileManager
                 dataGridView1.Columns.Add(col);
                 dataGridView1.Columns[i].HeaderText = "-";
             }     
-            dataGridView1.Rows.Insert(0, 5);
+            dataGridView1.Rows.Insert(0, 100);
             SetDataGridView1Width();
             Load_Click(null, null);
         }
@@ -61,11 +65,11 @@ namespace FileManager
 
             File.SentToDB();
 
-            SetColName();
+            SetCol();
             SetDataGridView1Width();
         }
 
-        private void SetColName()
+        private void SetCol()
         {
             dataGridView1.Columns[0].HeaderText = "序号";
             dataGridView1.Columns[1].HeaderText = "文件名";
@@ -171,53 +175,65 @@ namespace FileManager
 
          public void UpdataGridView(ArrayList FileInfoCollector)
         {
-            SetColName();
+            SetCol();
             dataGridView1.Rows.Clear();
+            dataGridView1.Rows.Insert(0, 100);
 
             int serialIndex = File.GetDataGridViewIndex(dataGridView1, "序号");
             int fileNameIndex = File.GetDataGridViewIndex(dataGridView1, "文件名");
             int pathIndex = File.GetDataGridViewIndex(dataGridView1, "路径");
 
-            if(true)
+            const string dbPath = ".\\db.db3";
+            if (!System.IO.File.Exists(dbPath))
+                return;
+
+
+            SQLiteDBHelper db = new SQLiteDBHelper(dbPath);
+            string sql = "select * from file_name";
+            using (SQLiteDataReader reader = db.ExecuteReader(sql, null))
             {
-                const string dbPath = ".\\db.db3";
-                if (!System.IO.File.Exists(dbPath))
-                    return;
-         
-                SQLiteDBHelper db = new SQLiteDBHelper(dbPath);
-                string sql = "select * from file_name";
-                using (SQLiteDataReader reader = db.ExecuteReader(sql, null))
+                int index = 0;
+                while (reader.Read())
                 {
-                    int index = 0;
-                    while (reader.Read())
-                    {
+                    if (index > dataGridView1.Rows.Count - 2)
                         dataGridView1.Rows.Add();
-                        dataGridView1.Rows[index].Cells[serialIndex].Value = index.ToString();
-                        dataGridView1.Rows[index].Cells[fileNameIndex].Value = reader["name"].ToString();                    
-                        dataGridView1.Rows[index].Cells[pathIndex].Value = reader["filePath"].ToString();
-                        ++index;
-                    }
+
+                    dataGridView1.Rows[index].Cells[serialIndex].Value = index.ToString();
+                    dataGridView1.Rows[index].Cells[fileNameIndex].Value = reader["name"].ToString();
+                    dataGridView1.Rows[index].Cells[pathIndex].Value = reader["filePath"].ToString();
+                    ++index;
                 }
-
-
             }
-            else
+
+
+
+
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            int colIndex = e.ColumnIndex;
+        }
+
+        private void dataGridView1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if(e.KeyChar == (char)Keys.Enter)
             {
-                for (int i = 0; i < FileInfoCollector.Count; i++)
-                {
-                    dataGridView1.Rows.Add();
-                    dataGridView1.Rows[i].Cells[serialIndex].Value = i.ToString();
-                    dataGridView1.Rows[i].Cells[fileNameIndex].Value = ((File.FileInformation)FileInfoCollector[i]).FileName;
-                    dataGridView1.Rows[i].Cells[2].Value = ((File.FileInformation)FileInfoCollector[i]).Lable.Replace("Lable:", "");
-                    dataGridView1.Rows[i].Cells[pathIndex].Value = ((File.FileInformation)FileInfoCollector[i]).FullName;
-                }
+                int a = 0;
             }
+        }
 
-
-           
-             
-        }   
-        
+        private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            int colIndex = e.ColumnIndex;
+        }
     }
 
  

@@ -2,4 +2,4 @@
 *.cache
 /FileManager/obj/*
 *.suo
-*.exe
+FileManager.exe
