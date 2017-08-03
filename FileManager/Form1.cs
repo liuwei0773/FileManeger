@@ -11,6 +11,7 @@ namespace FileManager
     public partial class Form1 : Form
     {
         private FileProperty fileProperty = null;
+        private ExistFiles existFiles = null;
         public Form1()
         {
             InitializeComponent();
@@ -23,18 +24,16 @@ namespace FileManager
             //Init();         
         }
 
-        public void Init()
+        private void LoadFileProperty()
         {
-            
-            for (int i = 0; i < 13; i++)
-            {
-                DataGridViewColumn col = new DataGridViewTextBoxColumn();
-                dataGridView1.Columns.Add(col);
-                dataGridView1.Columns[i].HeaderText = "-";
-            }     
-            dataGridView1.Rows.Insert(0, 100);
-            SetDataGridView1Width();
-            Load_Click(null, null);
+            fileProperty = new FileProperty(dataGridView1);
+            fileProperty.Init();
+        }
+
+        private void LoadExistFiles()
+        {
+            existFiles = new ExistFiles(dataGridView1);
+            existFiles.Init();
         }
 
         /// <summary>
@@ -46,28 +45,7 @@ namespace FileManager
             dataGridView1.Columns[1].Width = 120;
             dataGridView1.Columns[2].Width = 120;
             dataGridView1.Columns[3].Width = 120;
-        }
-
-        /// <summary>
-        /// 打开目录响应函数
-        /// </summary>
-        public void OpenDirectionary(string Path)
-        {
-            ArrayList FileList = File.GetAllFilesFullName(Path);
-            for (int i = 0; i < FileList.Count; i++) 
-            {
-                File.FileInformation fi = new File.FileInformation();
-                fi.FileName = File.FullNameToName(FileList[i].ToString());
-                fi.FullName = FileList[i].ToString();
-                fi.Lable = "Lable:";
-                File.g_FileInfoCollector.Add(fi);
-            }
-
-            File.SentToDB();
-
-            SetCol();
-            SetDataGridView1Width();
-        }
+        }  
 
         private void SetCol()
         {
@@ -80,116 +58,23 @@ namespace FileManager
             dataGridView1.Columns[12].HeaderText = "路径";
         }
 
-  
-
-        /// <summary>
-        /// 数据报表鼠标点击事件
-        /// </summary>
-        private void dataGridView1_MouseClick(object sender, MouseEventArgs e)
-        {
-            int selectedItem = 0;
-            if (dataGridView1.SelectedRows.Count > 0)
-            {              
-                selectedItem = dataGridView1.SelectedRows[0].Index;
-            }
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)
-            {
-                Point PointMouse = dataGridView1.PointToScreen(new Point(e.X, e.Y));
-                contextMenuStrip1.Show(PointMouse);
-            }
-        }
-
-        private void btnOpenDirectionary_Click(object sender, EventArgs e)
-        {
-            FolderBrowserDialog openFileDialog = new FolderBrowserDialog();
-            //openFileDialog.InitialDirectory = "c:\\";
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {              
-                File.g_FileInfoCollector.Clear();
-                string fileName = openFileDialog.SelectedPath;
-                OpenDirectionary(fileName);
-                UpdataGridView(File.g_FileInfoCollector);
-            }
-        }
-
-        private void button1_Click_0(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            //openFileDialog.InitialDirectory = "c:\\";
-            openFileDialog.Filter = "文本文件|*.*|C#文件|*.cs|所有文件|*.*";
-            openFileDialog.RestoreDirectory = false;
-            openFileDialog.FilterIndex = 1;
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                string fileName = openFileDialog.FileName;
-                OpenDirectionary(fileName);
-            }
-        }
-
-        private void tsmOpen_Click(object sender, EventArgs e)
-        {
-            int index = File.GetDataGridViewIndex(dataGridView1, "路径");
-            int count = dataGridView1.SelectedCells.Count;
-            if (count < 1)
-                return;
-            int selectedRowIndex = dataGridView1.SelectedCells[0].RowIndex;
-            string FileName = dataGridView1.Rows[selectedRowIndex].Cells[index].Value.ToString();
-            FileName = FileName.Trim();
-            System.Diagnostics.Process.Start(FileName);
-        }
-
-        private void tsmOpenDirect_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                int index = File.GetDataGridViewIndex(dataGridView1, "路径");
-                int count = dataGridView1.SelectedCells.Count;
-                if (count < 1)
-                    return;
-                int selectedRowIndex = dataGridView1.SelectedCells[0].RowIndex;
-                string FileName = dataGridView1.Rows[selectedRowIndex].Cells[index].Value.ToString();
-                string direct = File.FullNameToDirectionary(FileName);
-                direct = direct.Trim();
-                System.Diagnostics.Process.Start(direct);
-            }
-            catch(Exception err)
-            {
-                MessageBox.Show(err.ToString());
-            }
-            
-        }
-
-        private void Save_Click(object sender, EventArgs e)
-        {
-            File.SaveFileInfomation(File.g_FileInfoCollector);
-        }
-
-        private void Load_Click(object sender, EventArgs e)
-        {
-            File.g_FileInfoCollector.Clear();
-            File.ReadFileInfomation(File.g_FileInfoCollector);         
-            UpdataGridView(File.g_FileInfoCollector);
-        }
-
-     
-
-         public void UpdataGridView(ArrayList FileInfoCollector)
+        public void UpdataGridView(ArrayList FileInfoCollector)
         {
             SetCol();
             dataGridView1.Rows.Clear();
             dataGridView1.Rows.Insert(0, 100);
 
-            int serialIndex = File.GetDataGridViewIndex(dataGridView1, "序号");
-            int fileNameIndex = File.GetDataGridViewIndex(dataGridView1, "文件名");
-            int pathIndex = File.GetDataGridViewIndex(dataGridView1, "路径");
+            int serialIndex = FileUtilty.GetDataGridViewIndex(dataGridView1, "序号");
+            int fileNameIndex = FileUtilty.GetDataGridViewIndex(dataGridView1, "文件名");
+            int pathIndex = FileUtilty.GetDataGridViewIndex(dataGridView1, "路径");
 
-            const string dbPath = ".\\db.db3";
+            const string dbPath = ExistFiles.dbPath;
             if (!System.IO.File.Exists(dbPath))
                 return;
 
 
             SQLiteDBHelper db = new SQLiteDBHelper(dbPath);
-            string sql = "select * from file_name";
+            string sql = "select * from " + ExistFiles.existFilessName;
             using (SQLiteDataReader reader = db.ExecuteReader(sql, null))
             {
                 int index = 0;
@@ -205,9 +90,93 @@ namespace FileManager
                 }
             }
 
+        }
+
+        #region 菜单响应函数
+        /// <summary>
+        /// 打开目录响应函数
+        /// </summary>
+        public void OpenDirectionary(string Path)
+        {
+            ArrayList FileList = FileUtilty.GetAllFilesFullName(Path);
+            for (int i = 0; i < FileList.Count; i++)
+            {
+                ExistFiles.FileInformation fi = new ExistFiles.FileInformation();
+                fi.FileName = FileUtilty.FullNameToName(FileList[i].ToString());
+                fi.FullName = FileList[i].ToString();
+                fi.Lable = "Lable:";
+                ExistFiles.g_FileInfoCollector.Add(fi);
+            }
+
+            ExistFiles.SentToDB();
+
+            SetCol();
+            SetDataGridView1Width();
+        }
+
+        private void btnOpenDirectionary_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog openFileDialog = new FolderBrowserDialog();
+            //openFileDialog.InitialDirectory = "c:\\";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                ExistFiles.g_FileInfoCollector.Clear();
+                string fileName = openFileDialog.SelectedPath;
+                OpenDirectionary(fileName);
+                UpdataGridView(ExistFiles.g_FileInfoCollector);
+            }
+        }
 
 
 
+        private void tsmOpen_Click(object sender, EventArgs e)
+        {
+            int index = FileUtilty.GetDataGridViewIndex(dataGridView1, "路径");
+            int count = dataGridView1.SelectedCells.Count;
+            if (count < 1)
+                return;
+            int selectedRowIndex = dataGridView1.SelectedCells[0].RowIndex;
+            string FileName = dataGridView1.Rows[selectedRowIndex].Cells[index].Value.ToString();
+            FileName = FileName.Trim();
+            System.Diagnostics.Process.Start(FileName);
+        }
+
+        private void tsmOpenDirect_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int index = FileUtilty.GetDataGridViewIndex(dataGridView1, "路径");
+                int count = dataGridView1.SelectedCells.Count;
+                if (count < 1)
+                    return;
+                int selectedRowIndex = dataGridView1.SelectedCells[0].RowIndex;
+                string FileName = dataGridView1.Rows[selectedRowIndex].Cells[index].Value.ToString();
+                string direct = FileUtilty.FullNameToDirectionary(FileName);
+                direct = direct.Trim();
+                System.Diagnostics.Process.Start(direct);
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.ToString());
+            }
+
+        }
+        #endregion
+
+
+        #region 表格UI响应函数
+        private void dataGridView1_MouseClick(object sender, MouseEventArgs e)
+        {
+            int selectedItem = 0;
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                selectedItem = dataGridView1.SelectedRows[0].Index;
+            }
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                Point PointMouse = dataGridView1.PointToScreen(new Point(e.X, e.Y));
+                contextMenuStrip1.Show(PointMouse);
+            }
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -234,6 +203,30 @@ namespace FileManager
             int rowIndex = e.RowIndex;
             int colIndex = e.ColumnIndex;
         }
+        #endregion
+
+
+        #region 主界面按钮响应函数
+        private void Save_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Load_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+        }
+        #endregion
     }
 
  

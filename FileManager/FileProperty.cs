@@ -8,18 +8,16 @@ using System.Windows.Forms;
 
 namespace FileManager
 {
-    class FileProperty
+    class FileProperty : GridView
     {
-        public DataGridView dataGridView = null;
-        private const string datebaseName = ".\\db.db3";
-        private const string tableName = "file_property";
+       
 
         public FileProperty(DataGridView dataGridView)
         {
             this.dataGridView = dataGridView;
         }
 
-        public void Init()
+        public override void Init()
         {
             dataGridView.Columns.Clear();
             for (int i = 0; i < 13; i++)
@@ -31,10 +29,8 @@ namespace FileManager
             dataGridView.Rows.Insert(0, 100);
         }
 
-        /// <summary>
-        /// 创建文件属性表
-        /// </summary>
-        private bool CreateTable()
+
+        protected override bool CreateTable()
         {
             try
             {
@@ -74,7 +70,7 @@ namespace FileManager
         /// <summary>
         /// 设置列
         /// </summary>
-        protected void SetCol()
+        protected override void SetCol()
         {
             dataGridView.Columns[0].HeaderText = "序号";
             dataGridView.Columns[1].HeaderText = "文件名";
@@ -84,18 +80,15 @@ namespace FileManager
             }         
         }
 
-        protected int GetColIndex(string name)
-        {
-            return File.GetDataGridViewIndex(dataGridView, "name");
-        }
 
-        private void UpdateUI()
+
+        protected override void UpdateUI()
         {
             SetCol();
 
             dataGridView.Rows.Clear();
             SQLiteDBHelper db = new SQLiteDBHelper(datebaseName);
-            string sql = "select * from file_name";
+            string sql = "select * from " + existFilessName;
             using (SQLiteDataReader reader = db.ExecuteReader(sql, null))
             {
                 int index = 0;
